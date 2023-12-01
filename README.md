@@ -2,11 +2,13 @@
 ```
 conda install flask
 conda install python-dotenv
-conda install pytorch::pytorch torchvision torchaudio -c pytorch
-conda install sklearn pandas numpy 
-conda install scipy
-conda install nltk
+pip install -U spacy
 ```
 
+https://github.com/danielibanezgarcia/less
+
 ## Citation
-Todo `https://github.com/LaSTUS-TALN-UPF/TSAR-LSBert`
+
+Deleted:
+Todo `https://github.com/qiang2100/BERT-LS`(but quite edited and using the pretrained ES from the following:)
+    `https://github.com/LaSTUS-TALN-UPF/TSAR-LSBert` : `https://dl.fbaipublicfiles.com/fasttext/vectors-crawl/cc.es.300.vec.gz`
