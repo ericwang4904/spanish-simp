@@ -10,6 +10,7 @@ follow `https://github.com/danielibanezgarcia/less`
     `https://github.com/AdoptOpenJDK/homebrew-openjdk`
         `brew install --cask temurin8`
     `pip install JPype1 jvm`
+    `pip install uralicNLP` <– important; I modified the less code to use this
 
 have to edit:
     change `config.py` path to `/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/lib/server/libjvm.dylib` or similar
@@ -20,8 +21,6 @@ circumventing current weirdness:
 
 
 https://github.com/danielibanezgarcia/less
-
-
 
 
 
