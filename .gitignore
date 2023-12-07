@@ -1,4 +1,7 @@
+# python stuff
 .venv
 .conda
-cc.es.300.vec
-es-2-grams.pkl
+
+# openai key
+config.py
+

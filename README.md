@@ -1,3 +1,11 @@
+##
+
+## Scrapped (Can ignore): 
+
+`python -m spacy download es_core_news_sm`
+`brew install boost icu4c` for freeling
+
+
 ## Reqs
 ```
 pip install flask
@@ -5,6 +13,7 @@ pip install python-dotenv
 pip install -U spacy
 pip install wheel
 ```
+
 follow `https://github.com/danielibanezgarcia/less`
     `https://freeling-user-manual.readthedocs.io/en/v4.2/installation/requirements-mac/`
     `https://github.com/AdoptOpenJDK/homebrew-openjdk`

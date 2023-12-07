@@ -1,0 +1,2 @@
+class lexSimp:
+    pass
