@@ -1,5 +1,3 @@
-# TODO: Improve this lexical complexity prediction model with something more predictive
-
 class LCP:
     def __init__(self, threshold) -> None:
         self.threshold = threshold
