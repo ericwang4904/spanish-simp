@@ -8,6 +8,11 @@ def rawtext_from_url(url):
     article.download()
     article.parse()
 
-    return article.text
+    ftext = article.text
+
+    # initial text manipulation goes here
+    ftext = re.sub("\n", " ", ftext)
+    
+    return ftext
 
 
