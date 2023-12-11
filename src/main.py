@@ -6,8 +6,8 @@ from request_handler import rawtext_from_url
 url = 'https://www.lifeder.com/identidad-personal/'
 rawtext = rawtext_from_url(url)
 
-user = "Spanish beginner with good vocabulary, but poor understanding of sentence structure."
-# user = "Spanish beginner with good understanding of sentence structure, but poor vocabulary."
+#user = "Spanish beginner with good vocabulary, but poor understanding of sentence structure."
+user = "Spanish beginner with good understanding of sentence structure, but poor vocabulary."
 
 params = {
     'user': user,
