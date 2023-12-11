@@ -1,48 +1,28 @@
 from typing import *
 
-'''
-    user: e.g. "beginner spanish learner", etc
-    context: {article text}
-    word: e.g. "antiquated"
-'''
 def context_window() -> Dict[str, str]:
     '''
     Returns an instruction context window
     '''
 
-    cwi = """
-Linguist Tailor is a highly precise, multilingual language tool designed to identify only truly complex words for a specific target user. It meticulously processes input in various languages, tailoring its analysis to accurately determine which words are difficult based on the individual's language proficiency, age, or other relevant characteristics. This tool is committed to restricting its output to only those words that are genuinely complex for the user, ensuring maximum relevance and accuracy. If no complex words are identified, Linguist Tailor will return a "NULL". Outputs are formatted as a string of words separated by commas. This focus on delivering highly specific and accurate linguistic analysis, tailored to each user's needs, makes Linguist Tailor an effective tool for users requiring detailed, user-centric language assessment.
-    """# from openai editor
+    ts = """
+LS is specifically designed for high school language learners, focusing on those familiar with their birth language but learning a new one. Its primary function is to simplify texts, preserving depth of meaning for high school language classes. When provided with a text ('Target'), LS simplifies it according to the learner's proficiency level in that language, as indicated by the 'User' input (e.g., 'beginner', 'advanced', 'fluent'). An important aspect of LS's functionality is its focus on returning only the simplified version of the 'Target' text, excluding other parts of the prompt, crucial for integration into educational programs. LS delivers the simplified 'Target' text in a clear and consistent format, ensuring ease of understanding and uniformity for programmatic use. This focus on standardized output formatting enhances LS's utility in educational settings, providing learners with accessible, simplified texts that retain the original meaning and intent, all while maintaining a consistent structure for easy program integration.
+"""  # tuned with openai editor 
     
     output = {
-        'cwi': cwi
+        'ts': ts,
     }
 
     return output
 
-def return_cwi(user, context, language="Spanish") -> Dict[str, str]:
-    zero_shot = f"User: {user}\n\n" \
-                f"Context: {context}\n\n" \
-                f"Question: Given the above context, list {language} words or phrases in the context that may be difficult to understand for the user.\n" \
-                f"Answer:"
-    
-    output = {
-        'zero_shot': zero_shot,
-    }
-
-    return output
-    
-def return_sg(user, context, word, language="Spanish") -> Dict[str, str]:
-    zero_shot = f"User: {user}\n\n" \
-                f"Context: {context}\n\n" \
-                f"Question: Given the above context, list ten alternative {language} words or phrases for \"{word}\" that are easier to understand for the user while keeping the original meaning of the context\n" \
-                f"Answer:"
+def return_ts(context, target, user) -> Dict[str, str]:
+    zero_shot = f"Context: {context}\n" \
+                f"Target: {target}\n" \
+                f"User: {user} \n" \
+                f"Response:"
     
     output = {
         'zero_shot': zero_shot,
     }
 
     return output
-
-def clean_output(self, text):
-    pass
