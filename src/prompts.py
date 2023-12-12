@@ -2,7 +2,7 @@ from typing import *
 
 def context_window() -> Dict[str, str]:
     '''
-    Returns an instruction context window
+    Returns an instruction context window for prompting
     '''
 
     ts = """
@@ -16,6 +16,9 @@ LS is specifically designed for high school language learners, focusing on those
     return output
 
 def return_ts(context, target, user) -> Dict[str, str]:
+    """
+    Query format for gpt according the provided ts context window.
+    """
     zero_shot = f"Context: {context}\n" \
                 f"Target: {target}\n" \
                 f"User: {user} \n" \

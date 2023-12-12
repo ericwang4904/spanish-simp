@@ -89,7 +89,8 @@ class TS:
         """
         Sets all s_ based on new text
         """
-        self.s_text = ' '.join(new_text)  # is this too shady? idk. its 9:25 at night I cant
+
+        self.s_text = ' '.join(new_text)
         self.s_tokens, self.s_group_tokens = self.tokenize(self.s_text)
 
         self.len_s_token_list = len(self.s_tokens)

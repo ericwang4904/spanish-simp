@@ -11,9 +11,9 @@ user = "Spanish beginner with good understanding of sentence structure, but poor
 
 params = {
     'user': user,
-    'group_len': 3,
-    'context_window_len': 1, 
-    'model': 'gpt-4',
+    'group_len': 3,  # higher values require fewer tokens but may be less fine 
+    'context_window_len': 1, # higher values give more context but require more tokens
+    'model': 'gpt-4-1106-preview',
 }
 
 openai_params = {
@@ -32,7 +32,7 @@ file = open('output.txt', 'w')
 
 file.write("----- Sample Output -----\n")
 file.write(f"User: {params['user']}\n")
-file.write(f"Model: GPT-4\n")
+file.write(f"Model: {params['model']}\n")
 file.write("----- Old -----\n")
 file.write(a.old_s_text + "\n")
 file.write("----- New -----\n")
