@@ -28,41 +28,54 @@ class TS:
 
 
         self.text = text
-        self.tokens, self.group_tokens = self.tokenize(self.text)
+        self.tokens = sent_tokenize(self.text) 
+        self.group_tokens = self.make_groups(self.tokens)
 
         # s_ : simplified language (used in simplification iteratively) 
         # old_s : allows for undo feature
         self.s_text = self.text
-        self.old_s_text = self.s_text
+        self.s_group_tokens = self.group_tokens
+
+        # Possibly useful for recursive simplification (i.e. context windows with simplified text), but unused
         self.s_tokens = self.tokens
         self.old_s_tokens = self.s_tokens
-        self.s_group_tokens = self.group_tokens
-        self.old_s_group_tokens = self.s_group_tokens
 
         self.len_s_group_tokens_list = len(self.s_group_tokens)
         self.len_s_token_list = len(self.s_tokens)
+        self.buffer = [[], 0, 0]  # allows for one redo. [[modified parts], lb, ub]
 
         self.client = OpenAI(api_key=API_KEY)
-
     
-    def tokenize(self, text: str):
+    def make_groups(self, tokens: str):
         """
-        :return: tokens, group_tokens according to text input and self.group_len. Used in to tokenize simplified text.
-        """
-        tokens = sent_tokenize(text)
-        
+        :return: group_tokens according to self.group_len. 
+        """        
         # concatenate sentences according to group length 
         group_tokens = []
         for i in range(0, len(tokens), self.group_len):
             group = " ".join(tokens[i:i + self.group_len])
             group_tokens.append(group)
         
-        return tokens, group_tokens
+        return group_tokens
     
-    def undo(self):
-        self.s_text = self.old_s_text
-        self.s_tokens = self.old_s_tokens
-        self.s_group_tokens = self.old_s_group_tokens
+    def redo(self):
+        from_buffer, lb, ub = self.buffer
+        self.s_group_tokens[lb : ub] = from_buffer
+
+    def revert_groups(self, lower_bound: int, upper_bound: int):
+        """
+        replace simplifed text with the original
+        """
+        lb = lower_bound
+        ub = upper_bound
+
+        self.buffer[0] = self.s_group_tokens[lb : ub] 
+        self.buffer[1] = lb
+        self.buffer[2] = ub
+
+        self.s_group_tokens[lb : ub] = self.group_tokens[lb : ub]
+        self.set_parameters()
+
 
     def simplify(self, lower_bound: int, upper_bound: int, openai_params: Dict[str, any]) -> Dict[str, any]:
         '''
@@ -72,29 +85,24 @@ class TS:
         :param openai_params: parameters for openai query
         :return: None
         '''
-
-        # save old text
-        self.old_s_text = self.s_text
-        self.old_s_tokens = self.s_tokens
-        self.old_s_group_tokens = self.s_group_tokens
         
         # prompt openai for simplification
         ts_output = self._ts(lower_bound, upper_bound, openai_params=openai_params)
-        new_sgt = self.s_group_tokens
-        new_sgt[lower_bound : upper_bound] = ts_output['completion']
-
-        self.set_parameters(new_sgt)
         
-    def set_parameters(self, new_text):
+        self.s_group_tokens[lower_bound : upper_bound] = ts_output['completion']
+
+        self.set_parameters()
+        
+    def set_parameters(self):
         """
-        Sets all s_ based on new text
+        Sets new text and sentences based on self.s_group_tokens. Groups are not remade, to preserve the structure of the text.
         """
 
-        self.s_text = ' '.join(new_text)
-        self.s_tokens, self.s_group_tokens = self.tokenize(self.s_text)
+        self.s_text = ' '.join(self.s_group_tokens)
+        self.s_tokens = sent_tokenize(self.s_text)
 
-        self.len_s_token_list = len(self.s_tokens)
-        self.len_s_group_tokens_list = len(self.s_group_tokens)
+        self.len_s_token_list = len(self.s_tokens)  # unused
+        self.len_s_group_tokens_list = len(self.s_group_tokens)  # this value should not change. s_group_tokens should always be the same size as the original group_tokens
         
 
     def _ts(self, lower_bound: int, upper_bound: int, openai_params) -> Dict[str, any]:
@@ -117,9 +125,9 @@ class TS:
                 response.choices[0].message.content
                 )
             
-            # query debugging
-            # print("-" * 10)
-            # print(response.choices[0].message.content)
+            # query debugging:
+            #print("-" * 10)
+            #print(response.choices[0].message.content)
         
         output = {
             'lower_bound': lower_bound,
