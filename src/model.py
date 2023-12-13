@@ -20,15 +20,43 @@ class TS:
             context_window_size: the size of the window in the context for context_from_group (in # of tokens)
             model: name of openai model (e.g. gpt-3.5-turbo and gpt-4)
         """
+        self.load_params(params)
+        self.load_restart_params(params)
+        self.load_text(text)
+        self.load_token_length()
+
+        self.client = OpenAI(api_key=API_KEY)
+    
+    def load_user(self, user):
+        self.user = user
+
+    def load_params(self, params):
+        """
+        load parameters that don't require a full restart
+            - model
+            - user
+            - context_window_size
+        """
         try: self.user = params['user']
         except KeyError: log.error("user not provided")
-        self.group_len = params.get("group_len", 1)
-        self.context_window_size = params.get("context_window_size", 1)
-        self.openai_model = params.get("model", "gpt-3.5-turbo")
 
+        self.context_window_size = int(params.get("context_window_size", 1))
+        self.openai_model = str(params.get("model", "gpt-3.5-turbo"))
+
+    def load_restart_params(self, params):
+        """
+        load parameters that require full restart of simplification process
+            - group_len
+        """
+        self.group_len = int(params.get("group_len", 3))
+
+    def load_text(self, text):
+        """
+        load text, tokens, and group tokens into model from rawtext input
+        """
 
         self.text = text
-        self.tokens = sent_tokenize(self.text) 
+        self.tokens = self.make_tokens(self.text) 
         self.group_tokens = self.make_groups(self.tokens)
 
         # s_ : simplified language (used in simplification iteratively) 
@@ -38,15 +66,15 @@ class TS:
 
         # Possibly useful for recursive simplification (i.e. context windows with simplified text), but unused
         self.s_tokens = self.tokens
-        self.old_s_tokens = self.s_tokens
 
+    def load_token_length(self):
         self.len_s_group_tokens_list = len(self.s_group_tokens)
         self.len_s_token_list = len(self.s_tokens)
-        self.buffer = [[], 0, 0]  # allows for one redo. [[modified parts], lb, ub]
 
-        self.client = OpenAI(api_key=API_KEY)
-    
-    def make_groups(self, tokens: str):
+    def make_tokens(self, text: str) -> List[str]:
+        return sent_tokenize(text)
+     
+    def make_groups(self, tokens: List[str]) -> List[str]:
         """
         :return: group_tokens according to self.group_len. 
         """        
@@ -57,39 +85,22 @@ class TS:
             group_tokens.append(group)
         
         return group_tokens
-    
-    def redo(self):
-        from_buffer, lb, ub = self.buffer
-        self.s_group_tokens[lb : ub] = from_buffer
 
-    def revert_groups(self, lower_bound: int, upper_bound: int):
-        """
-        replace simplifed text with the original
-        """
-        lb = lower_bound
-        ub = upper_bound
-
-        self.buffer[0] = self.s_group_tokens[lb : ub] 
-        self.buffer[1] = lb
-        self.buffer[2] = ub
-
-        self.s_group_tokens[lb : ub] = self.group_tokens[lb : ub]
-        self.set_parameters()
-
-
-    def simplify(self, lower_bound: int, upper_bound: int, openai_params: Dict[str, any]) -> Dict[str, any]:
+    def simplify(self, ids: List[int], openai_params: Dict[str, any]):
         '''
         Simplifies a range of text in group_tokens and saves them to self variables.
-        :param lower_bound: lower index for slice of group_tokens to cwi
-        :param upper_bound: upper index (not included) for slice of group_tokens to cwi
+        :param ids: List of ids in group_tokens for simplification
         :param openai_params: parameters for openai query
         :return: None
         '''
-        
+        raise Exception("WTF???")
         # prompt openai for simplification
-        ts_output = self._ts(lower_bound, upper_bound, openai_params=openai_params)
+        ts_output = self._ts(ids, openai_params=openai_params)
         
-        self.s_group_tokens[lower_bound : upper_bound] = ts_output['completion']
+        for output_idx, group_index in enumerate(ids):
+            print(self.s_group_tokens[group_index])
+            print(ts_output['completion'][output_idx])
+            self.s_group_tokens[group_index] = ts_output['completion'][output_idx]
 
         self.set_parameters()
         
@@ -105,19 +116,17 @@ class TS:
         self.len_s_group_tokens_list = len(self.s_group_tokens)  # this value should not change. s_group_tokens should always be the same size as the original group_tokens
         
 
-    def _ts(self, lower_bound: int, upper_bound: int, openai_params) -> Dict[str, any]:
+    def _ts(self, ids: List[int], openai_params) -> Dict[str, any]:
         '''
         Returns simplifications of each sentence. Use simplify instead.
-        :param lower_bound: lower index for slice of group_tokens to cwi
-        :param upper_bound: upper index (not included) for slice of group_tokens to cwi
+        :param ids: List of ids in group_tokens for simplification
         :param openai_params: params for openai query
-        :return: Dictionary of (lb, ub, response) where self.group_tokens[i] corresponds to response[i]
+        :return: Dictionary of (ids, completion) where self.group_tokens[ids[i]] corresponds to completion[i]
         '''
 
         completion = []
-        for idx in range(lower_bound, upper_bound):
-
-            context_dict = self.context_from_group(idx, self.context_window_size)  # todo
+        for id in ids:
+            context_dict = self.context_from_group(id, self.context_window_size)  # todo
             query = self.ts_query(**context_dict, user=self.user, params=openai_params)
 
             response = self.client.chat.completions.create(**query)
@@ -130,8 +139,7 @@ class TS:
             #print(response.choices[0].message.content)
         
         output = {
-            'lower_bound': lower_bound,
-            'upper_bound': upper_bound,
+            'ids': ids, 
             'completion': completion,
         }
 
@@ -168,15 +176,17 @@ class TS:
         Returns a dictionary of context and target. For use in generating a ts_query input (excluding "user") field.
         :param idx: refers to the index found in self.group_tokens.
         :param window: size of context window in number of sentences (self.tokens), not groups (self.group_tokens).
+
+        THIS IS THE FUNCTION TO CHANGE FOR IMPROVEMENTS AND QOL TO PROMPTING; THIS FUNCTION GENERATES THE CONTEXT
         """
         tok_idx = idx * self.group_len
 
         lb = max(tok_idx-window, 0)  # prevents underflow
         ub = min(tok_idx+self.group_len + window, len(self.tokens))  # prevents overflow
 
-        target = self.s_group_tokens[idx]
-        context_lower = self.s_tokens[lb : tok_idx]
-        context_higher = self.s_tokens[tok_idx+self.group_len : ub]
+        target = self.group_tokens[idx] 
+        context_lower = self.tokens[lb : tok_idx]
+        context_higher = self.tokens[tok_idx+self.group_len : ub]
 
         context_list = context_lower + ["\n[Target]\n"] + context_higher
         context = " ".join(context_list)
