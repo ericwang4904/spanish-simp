@@ -32,7 +32,7 @@ base_openai_params = {
 def load_model():
     return TS("placeholder", base_params)
 
-def load_data(url):
+def load_data(ts, url):
     load_button = st.button("Load Data Into Model (this will reset progress)")
     if load_button:
         try:
@@ -42,63 +42,58 @@ def load_data(url):
             return
 
         # setting new data
-        model.load_text(rawtext)
+        ts.load_text(rawtext)
     
     
-def load_params(params):
+def load_params(ts, params):
     load_params = st.button("Load params into model")
     if load_params:
-        model.load_params(params)
+        ts.load_params(params)
 
-def load_restart_params(params):
+def load_restart_params(ts, params):
     load_restart_params = st.button("Load params into model (this will reset progress)")
     if load_restart_params:
-        model.load_restart_params(params)
+        ts.load_restart_params(params)
 
     # reformat text for group_len (causes a reset)
-    model.group_tokens = model.make_groups(model.tokens)
-    model.s_group_tokens = model.group_tokens
-    model.load_token_length()
+    ts.group_tokens = ts.make_groups(ts.tokens)
+    ts.s_group_tokens = ts.group_tokens
+    ts.load_token_length()
 
-def simplify_selections(selection):
+def simplify_selections(ts, selection):
     simplify = st.button("Simplify!")
     if simplify:
-        print("wtf")
-        model.simplify(
-            selection,
-            openai_params
-            )
-        print("done")
+        ts.simplify(selection,openai_params)
 
 st.title("Yolanda's Spanish Simplifier")
-model = load_model()
+ts = load_model()
 
 st.header("News Website URL")
 url = st.text_input("Website URL", placeholder='https://google.com')
-load_data(url)
+load_data(ts, url)
 st.header("Model Parameter that Require a Reset")
 reset_params = st.data_editor(base_restart_params)
-load_restart_params(reset_params)
+load_restart_params(ts, reset_params)
 st.header("Model Parameters")
 params = st.data_editor(base_params)
-load_params(params)
+load_params(ts, params)
 st.header("OpenAI Parameters")
 openai_params = st.data_editor(base_openai_params)
 
 st.header("Simplification Selection")
 
-ui_df = pd.DataFrame(
-    {   
-        "Selected": False,
-        "Original": model.group_tokens,
-        "Simplified": model.s_group_tokens,
-    }
-)
-
 col1, col2 = st.columns([0.2, 0.8])
 with col1:
-    selection = st.data_editor(ui_df["Selected"])
-    simplify_selections(np.nonzero(selection)[0].tolist())
+    selection = st.data_editor(pd.Series([False] * ts.len_s_group_tokens_list))
+    simplify_selections(ts, np.nonzero(selection)[0].tolist())
 
 with col2:
-    st.table(ui_df.loc[:, ["Original", "Simplified"]])
+    ui_df = pd.DataFrame(
+    {   
+        "Original": ts.group_tokens,
+        "Simplified": ts.s_group_tokens,
+    }
+    )
+    st.table(ui_df)
+
+ts.s_group_tokens

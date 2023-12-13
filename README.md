@@ -9,9 +9,6 @@ text is tokenized into sentences ->
 [sg2, sg4, sg5] which updates the global variable for simplified groups -> 
 [g1, sg2, g3, sg4, sg5, ...]
 
-revert function: allows you to revert a specific range in s_group_tokens to their originals in group_tokens
-redo function: revert writes the changed section to a buffer, and this buffer can be used to undo the revert
-
 ### Todo
 
 **What?** 

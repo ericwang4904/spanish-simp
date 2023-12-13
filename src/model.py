@@ -9,6 +9,9 @@ import logging as log
 from prompts import *
 from config import *
 
+import pandas as pd
+import numpy as np
+
 class TS:
     def __init__(self, text: str, params: dict) -> None:
         """
@@ -24,7 +27,7 @@ class TS:
         self.load_restart_params(params)
         self.load_text(text)
         self.load_token_length()
-
+        
         self.client = OpenAI(api_key=API_KEY)
     
     def load_user(self, user):
@@ -93,13 +96,11 @@ class TS:
         :param openai_params: parameters for openai query
         :return: None
         '''
-
+    
         # prompt openai for simplification
         ts_output = self._ts(ids, openai_params=openai_params)
         
         for output_idx, group_index in enumerate(ids):
-            print(self.s_group_tokens[group_index])
-            print(ts_output['completion'][output_idx])
             self.s_group_tokens[group_index] = ts_output['completion'][output_idx]
 
         self.set_parameters()
@@ -112,8 +113,8 @@ class TS:
         self.s_text = ' '.join(self.s_group_tokens)
         self.s_tokens = sent_tokenize(self.s_text)
 
-        self.len_s_token_list = len(self.s_tokens)  # unused
-        self.len_s_group_tokens_list = len(self.s_group_tokens)  # this value should not change. s_group_tokens should always be the same size as the original group_tokens
+        self.len_s_token_list = len(self.s_tokens)
+        self.len_s_group_tokens_list = len(self.s_group_tokens) 
         
 
     def _ts(self, ids: List[int], openai_params) -> Dict[str, any]:
