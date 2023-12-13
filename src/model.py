@@ -93,7 +93,7 @@ class TS:
         :param openai_params: parameters for openai query
         :return: None
         '''
-        raise Exception("WTF???")
+
         # prompt openai for simplification
         ts_output = self._ts(ids, openai_params=openai_params)
         
