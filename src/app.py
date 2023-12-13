@@ -4,8 +4,6 @@ import pandas as pd
 
 from typing import *
 
-from config import API_KEY
-
 from model import TS
 from prompts import *
 from request_handler import rawtext_from_url
@@ -66,8 +64,8 @@ def simplify_selections(ts: TS, selection: list, openai_params: dict):
 
 st.title("Yolanda's Spanish Simplifier")
 ts = load_model()
-api_key = st.text_input(label="OpenAI API Key", type='password')
-ts.client.api_key = api_key
+#api_key = st.text_input(label="OpenAI API Key", type='password')
+#ts.client.api_key = api_key
 
 
 st.header("News Website URL")
