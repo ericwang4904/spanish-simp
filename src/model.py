@@ -12,6 +12,8 @@ from config import *
 import pandas as pd
 import numpy as np
 
+from copy import deepcopy
+
 class TS:
     def __init__(self, text: str, params: dict) -> None:
         """
@@ -23,11 +25,12 @@ class TS:
             context_window_size: the size of the window in the context for context_from_group (in # of tokens)
             model: name of openai model (e.g. gpt-3.5-turbo and gpt-4)
         """
+        self.text = text
         self.load_params(params)
         self.load_restart_params(params)
-        self.load_text(text)
+        self.load_text(self.text)
         self.load_token_length()
-        
+
         self.client = OpenAI(api_key=API_KEY)
     
     def load_user(self, user):
@@ -51,7 +54,11 @@ class TS:
         load parameters that require full restart of simplification process
             - group_len
         """
+        
         self.group_len = int(params.get("group_len", 3))
+        
+        self.load_text(self.text)
+        self.load_token_length()
 
     def load_text(self, text):
         """
@@ -64,15 +71,27 @@ class TS:
 
         # s_ : simplified language (used in simplification iteratively) 
         # old_s : allows for undo feature
-        self.s_text = self.text
-        self.s_group_tokens = self.group_tokens
+        self.s_text = deepcopy(self.text)
+        self.s_group_tokens = deepcopy(self.group_tokens)
 
         # Possibly useful for recursive simplification (i.e. context windows with simplified text), but unused
-        self.s_tokens = self.tokens
+        self.s_tokens = deepcopy(self.tokens)
+
+    def set_s_text(self, s_group_tokens):
+        """
+        Sets new text and sentences based on self.s_group_tokens. Groups are not remade, to preserve the structure of the text.
+        """
+
+        self.s_group_tokens = deepcopy(s_group_tokens)
+        self.s_text = ' '.join(self.s_group_tokens)
+        self.s_tokens = sent_tokenize(self.s_text)
+
+        self.len_s_token_list = len(self.s_tokens)
 
     def load_token_length(self):
         self.len_s_group_tokens_list = len(self.s_group_tokens)
         self.len_s_token_list = len(self.s_tokens)
+
 
     def make_tokens(self, text: str) -> List[str]:
         return sent_tokenize(text)
@@ -96,25 +115,15 @@ class TS:
         :param openai_params: parameters for openai query
         :return: None
         '''
-    
         # prompt openai for simplification
+
         ts_output = self._ts(ids, openai_params=openai_params)
         
+        ngt = self.s_group_tokens
         for output_idx, group_index in enumerate(ids):
-            self.s_group_tokens[group_index] = ts_output['completion'][output_idx]
+            ngt[group_index] = ts_output['completion'][output_idx]
 
-        self.set_parameters()
-        
-    def set_parameters(self):
-        """
-        Sets new text and sentences based on self.s_group_tokens. Groups are not remade, to preserve the structure of the text.
-        """
-
-        self.s_text = ' '.join(self.s_group_tokens)
-        self.s_tokens = sent_tokenize(self.s_text)
-
-        self.len_s_token_list = len(self.s_tokens)
-        self.len_s_group_tokens_list = len(self.s_group_tokens) 
+        self.set_s_text(ngt)
         
 
     def _ts(self, ids: List[int], openai_params) -> Dict[str, any]:
