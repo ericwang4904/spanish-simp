@@ -29,7 +29,7 @@ base_openai_params = [{
 
 
 # App
-@st.cache_resource
+@st.cache_data
 def load_model():
     return TS("placeholder", params={})
 
