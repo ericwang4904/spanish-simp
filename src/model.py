@@ -143,10 +143,7 @@ class TS:
             context_dict = self.context_from_group(id, self.context_window_size)  # todo
             query = self.ts_query(**context_dict, user=self.user, params=openai_params)
             
-            try:
-                response = self.client.chat.completions.create(**query)
-            except:
-                raise Exception("Could not connect to OpenAI server. Maybe your API Key is incorrect?")
+            response = self.client.chat.completions.create(**query)
             completion.append(
                 response.choices[0].message.content
                 )
