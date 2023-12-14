@@ -56,6 +56,10 @@ def load_restart_params(ts: TS, params: dict):
     if load_restart_params:
         ts.load_restart_params(params)
 
+def load_api_key(ts: TS, api_key: str):
+    load_api_key = st.button("Load Your OpenAI API Key")
+    if load_api_key:
+        ts.client.api_key = api_key
 
 def simplify_selections(ts: TS, selection: list, openai_params: dict):
     simplify = st.button("Simplify!")
@@ -64,9 +68,8 @@ def simplify_selections(ts: TS, selection: list, openai_params: dict):
 
 st.title("Yolanda's Spanish Simplifier")
 ts = load_model()
-#api_key = st.text_input(label="OpenAI API Key", type='password')
-#ts.client.api_key = api_key
-
+api_key = st.text_input(label="OpenAI API Key", type='password')
+load_api_key(ts, api_key)
 
 st.header("News Website URL")
 url = st.text_input("Website URL", placeholder='https://google.com')

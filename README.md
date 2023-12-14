@@ -1,29 +1,11 @@
-<<<<<<< HEAD
-## Reqs
-```
-pip install flask
-pip install python-dotenv
-pip install -U spacy
-pip install wheel
-```
-follow `https://github.com/danielibanezgarcia/less`
-    `https://freeling-user-manual.readthedocs.io/en/v4.2/installation/requirements-mac/`
-    `https://github.com/AdoptOpenJDK/homebrew-openjdk`
-        `brew install --cask temurin8`
-    `pip install JPype1 jvm`
-    `pip install uralicNLP` <– important; I modified the less code to use this
 
-have to edit:
-    change `config.py` path to `/Library/Java/JavaVirtualMachines/temurin-11.jdk/Contents/Home/lib/server/libjvm.dylib` or similar
+## For Users:
 
-circumventing current weirdness:
-   - version of pyYAML project uses doesn't support cpython3.0 so you have to `pip install "cython<3.0.0" && pip install --no-build-isolation pyyaml==5.4.1`
-   - 
-=======
-### Documentation:
+todo
+
+
+## For Developers:
 After configuring your API key in to config.py (see config.py.template), you may begin using the program. Documentation is included for all functions. Sample inputs are availible in main.py. See Todo section for improving functionality.
->>>>>>> 81f2f263213461503535818cfb4a7f34fc47d4cc
-
 
 **How it works:**
 text is tokenized into sentences ->

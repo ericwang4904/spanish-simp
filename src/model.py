@@ -7,7 +7,11 @@ from typing import *
 
 import logging as log
 from prompts import *
-from config import *
+
+try:  # developers don't have to enter api key 
+    from config import API_KEY
+except:
+    API_KEY = 'null'
 
 import pandas as pd
 import numpy as np
@@ -138,8 +142,11 @@ class TS:
         for id in ids:
             context_dict = self.context_from_group(id, self.context_window_size)  # todo
             query = self.ts_query(**context_dict, user=self.user, params=openai_params)
-
-            response = self.client.chat.completions.create(**query)
+            
+            try:
+                response = self.client.chat.completions.create(**query)
+            except:
+                raise Exception("Could not connect to OpenAI server. Maybe your API Key is incorrect?")
             completion.append(
                 response.choices[0].message.content
                 )
