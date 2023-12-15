@@ -85,7 +85,7 @@ def simplify_selections(ts: TS, selection: list, openai_params: dict):
 
         cache_func(ts)
 
-st.title("Yolanda's Spanish Simplifier")
+st.title("Text Simplifier")
 try:
     ts = load_model(st.session_state.attr)
 except:  # initialize if no attributes to load
