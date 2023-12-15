@@ -1,4 +1,7 @@
 import regex as re
+import pandas as pd
+import numpy as np
+from functools import lru_cache
 
 from openai import OpenAI
 from nltk import sent_tokenize, word_tokenize
@@ -13,15 +16,13 @@ try:  # developers don't have to enter api key
 except:
     API_KEY = 'null'
 
-import pandas as pd
-import numpy as np
-
 from copy import deepcopy
 
 class TS:
-    def __init__(self, text: str, params: dict) -> None:
+    def __init__(self, text: str, params: dict, run_init: bool = False) -> None:
         """
-        Text Simplification Object. 
+        Text Simplification Object. Set run_init to true for developing local apps (no caching), allowing the text and params fields to work.
+
         :param text: text to be simplifed
         :param params: Other parameters for the object.
             user: description of user's linguistic capabilites
@@ -29,14 +30,37 @@ class TS:
             context_window_size: the size of the window in the context for context_from_group (in # of tokens)
             model: name of openai model (e.g. gpt-3.5-turbo and gpt-4)
         """
-        self.text = text
-        self.load_params(params)
-        self.load_restart_params(params)
-        self.load_text(self.text)
-        self.load_token_length()
+        if run_init:  # this is only for non-streamlit (local) purposes because of the way streamlit caching works; its less resource intensive to manually load from the past
+            self.text = text
+            self.load_text(self.text)
+            # you still need to load_restart_params manually
+        else:
+            # all attribute defaults
 
+            #text
+            self.text = ""
+            self.group_tokens=[]
+            self.tokens = []
+            self.s_text = ""
+            self.s_group_tokens=[]
+            self.s_tokens = []
+
+            #params
+            self.user = "a user"
+            self.context_window_size = 1
+            self.model="gpt-3.5-turbo"
+            
+            #restart params
+            self.group_len=3
+
+        self.load_token_length()
+        self.load_params(params)
         self.client = OpenAI(api_key=API_KEY)
     
+    def set_attributes(self, at: dict):  # to load cached data
+        for k,v in at.items():
+            setattr(self,k,v)
+
     def load_user(self, user):
         self.user = user
 
@@ -47,8 +71,7 @@ class TS:
             - user
             - context_window_size
         """
-        try: self.user = params['user']
-        except KeyError: log.error("user not provided")
+        self.user = str(params.get('user', ""))
 
         self.context_window_size = int(params.get("context_window_size", 1))
         self.openai_model = str(params.get("model", "gpt-3.5-turbo"))
@@ -80,8 +103,8 @@ class TS:
 
         # Possibly useful for recursive simplification (i.e. context windows with simplified text), but unused
         self.s_tokens = deepcopy(self.tokens)
-
-    def set_s_text(self, s_group_tokens):
+    
+    def load_s_text(self, s_group_tokens):
         """
         Sets new text and sentences based on self.s_group_tokens. Groups are not remade, to preserve the structure of the text.
         """
@@ -91,7 +114,7 @@ class TS:
         self.s_tokens = sent_tokenize(self.s_text)
 
         self.len_s_token_list = len(self.s_tokens)
-
+    
     def load_token_length(self):
         self.len_s_group_tokens_list = len(self.s_group_tokens)
         self.len_s_token_list = len(self.s_tokens)
@@ -99,7 +122,7 @@ class TS:
 
     def make_tokens(self, text: str) -> List[str]:
         return sent_tokenize(text)
-     
+
     def make_groups(self, tokens: List[str]) -> List[str]:
         """
         :return: group_tokens according to self.group_len. 
@@ -127,7 +150,7 @@ class TS:
         for output_idx, group_index in enumerate(ids):
             ngt[group_index] = ts_output['completion'][output_idx]
 
-        self.set_s_text(ngt)
+        self.load_s_text(ngt)
         
 
     def _ts(self, ids: List[int], openai_params) -> Dict[str, any]:
