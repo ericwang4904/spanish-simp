@@ -60,7 +60,7 @@ def simplify_selections(ts: TS, selection: list, openai_params: dict):
     if simplify:
         ts.simplify(selection, openai_params)
 
-st.title("Yolanda's Spanish Simplifier")
+st.title("Article Simplifier")
 if 'ts' not in st.session_state:
     st.session_state.ts = TS("placeholder", params=dict(**base_params[0], **base_restart_params[0]))
 api_key = st.text_input(label="OpenAI API Key", type='password')
