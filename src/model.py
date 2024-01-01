@@ -1,6 +1,7 @@
+from openai_api import Client  # specific api provider
+
 import regex as re
 
-from openai import OpenAI
 from nltk import sent_tokenize, word_tokenize
 from string import punctuation as PUNCT
 from typing import *
@@ -11,7 +12,7 @@ from prompts import *
 try:  # developers don't have to enter api key 
     from config import API_KEY
 except:
-    API_KEY = 'null'
+    API_KEY = ''
 
 import pandas as pd
 import numpy as np
@@ -27,7 +28,7 @@ class TS:
             user: description of user's linguistic capabilites
             group_len: number of sentences per token group. Defaults to 1.  
             context_window_size: the size of the window in the context for context_from_group (in # of tokens)
-            model: name of openai model (e.g. gpt-3.5-turbo and gpt-4)
+            model: name of model (e.g. gpt-3.5-turbo and mixtral-8x7b-instruct)
         """
         self.text = text
         self.load_params(params)
@@ -35,7 +36,7 @@ class TS:
         self.load_text(self.text)
         self.load_token_length()
 
-        self.client = OpenAI(api_key=API_KEY)
+        self.client = Client(api_key=API_KEY)  # api
     
     def load_user(self, user):
         self.user = user
@@ -51,7 +52,7 @@ class TS:
         except KeyError: log.error("user not provided")
 
         self.context_window_size = int(params.get("context_window_size", 1))
-        self.openai_model = str(params.get("model", "gpt-3.5-turbo"))
+        self.model_name = str(params.get("model", "null"))
 
     def load_restart_params(self, params):
         """
@@ -112,16 +113,16 @@ class TS:
         
         return group_tokens
 
-    def simplify(self, ids: List[int], openai_params: Dict[str, any]):
+    def simplify(self, ids: List[int], api_params: Dict[str, any]):
         '''
         Simplifies a range of text in group_tokens and saves them to self variables.
         :param ids: List of ids in group_tokens for simplification
-        :param openai_params: parameters for openai query
+        :param api_params: parameters for querying api provider
         :return: None
         '''
-        # prompt openai for simplification
+        # prompt api provider for simplification
 
-        ts_output = self._ts(ids, openai_params=openai_params)
+        ts_output = self._ts(ids, api_params=api_params)
         
         ngt = self.s_group_tokens
         for output_idx, group_index in enumerate(ids):
@@ -130,22 +131,21 @@ class TS:
         self.set_s_text(ngt)
         
 
-    def _ts(self, ids: List[int], openai_params) -> Dict[str, any]:
+    def _ts(self, ids: List[int], api_params) -> Dict[str, any]:
         '''
         Returns simplifications of each sentence. Use simplify instead.
         :param ids: List of ids in group_tokens for simplification
-        :param openai_params: params for openai query
+        :param api_params: params for querying api provider
         :return: Dictionary of (ids, completion) where self.group_tokens[ids[i]] corresponds to completion[i]
         '''
 
         completion = []
         for id in ids:
             context_dict = self.context_from_group(id, self.context_window_size)  # todo
-            query = self.ts_query(**context_dict, user=self.user, params=openai_params)
+            query = self.ts_query(**context_dict, user=self.user, params=api_params)
             
-            response = self.client.chat.completions.create(**query)
             completion.append(
-                response.choices[0].message.content
+                self.client.generate_response(**query)
                 )
             
             # query debugging:
@@ -167,13 +167,13 @@ class TS:
         :param params: parameters for query
         """
 
-        cw = context_window()['ts']
+        cw = context_window()['ts']  # todo: add selector option?
 
         # most of these below variables can be tuned, either globally or on a context specific basis
         prompt = return_ts(context, target, user)['zero_shot']
 
         query = {
-            'model': self.openai_model,
+            'model': self.model_name,
             'messages': [
                 {'role': 'system', 'content': cw},
                 {'role': 'user', 'content': prompt}
