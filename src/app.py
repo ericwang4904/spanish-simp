@@ -12,8 +12,8 @@ base_user = f"Spanish beginner with good understanding of sentence structure, bu
 
 base_params = [{
     'user': base_user, 
-    'context_window_size': 1,  # higher values give more context but require more tokens
     'model': 'gpt-3.5-turbo',#'pplx-7b-chat',
+    'context_window_size': 1,  # higher values give more context but require more tokens
 }]
 
 base_restart_params = [{
@@ -73,7 +73,7 @@ st.header("News Website URL")
 url = st.text_input("Website URL", placeholder='https://google.com')
 load_data(st.session_state.ts, url)
 
-st.header("Model Parameter that Require a Reset")
+st.header("Model Parameters that Require a Reset")
 reset_params = st.data_editor(base_restart_params)
 load_restart_params(st.session_state.ts, reset_params[0])
 

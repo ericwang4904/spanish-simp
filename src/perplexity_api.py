@@ -16,4 +16,7 @@ class Client:
 
         response = requests.post(url, json=query, headers=headers)
         response_dict = loads(response.text)
-        return response_dict['choices'][0]['message']['content']
+        if response.status_code == 200:
+            return response_dict['choices'][0]['message']['content']
+        else:
+            raise Exception(f"Validation Error! Response: {response_dict}")
