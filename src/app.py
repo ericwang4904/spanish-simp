@@ -8,24 +8,24 @@ from model import TS
 from prompts import *
 from request_handler import rawtext_from_url
 
-base_user = f"English beginner with good understanding of sentence structure, but poor vocabulary."
+base_user = f"Spanish beginner with good understanding of sentence structure, but poor vocabulary."
 
 base_params = [{
     'user': base_user, 
-    'context_window_size': 1, # higher values give more context but require more tokens
-    'model': 'gpt-3.5-turbo', # 'pplx-7b-chat',
-}] # list of dict insures that data typing stays when in data_editor
+    'context_window_size': 1,  # higher values give more context but require more tokens
+    'model': 'gpt-3.5-turbo',#'pplx-7b-chat',
+}]
 
 base_restart_params = [{
     'group_len': 3,  # higher values require fewer tokens but may be less fine
-}] # list of dict insures that data typing stays when in data_editor
+}]
 
 base_api_params = [{
     'temperature': 0.2,
     'max_tokens': 1024,
     'frequency_penalty': 0,
     'presence_penalty': 0,
-}] # list of dict insures that data typing stays when in data_editor
+}]
 
 def load_data(ts: TS, url):
     load_button = st.button("Load Data Into Model (this will reset progress)")
@@ -62,7 +62,7 @@ def simplify_selections(ts: TS, selection: list, api_params: dict):
     
 
 st.title("Article Simplifier")
-st.write("This app makes use of perplexity.ai's LLM api to create simplifications.")
+st.write("This app makes use of OpenAI's api to create simplifications.")
 
 if 'ts' not in st.session_state:
     st.session_state.ts = TS("placeholder", params=dict(**base_params[0], **base_restart_params[0]))
